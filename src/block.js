@@ -42,7 +42,7 @@ class Block {
                 const currentHash = this.hash;
                 // Recalculate the hash of the Block
                 this.hash = null;
-                const recalcHash = SHA256(JSON.stringify(this));
+                const recalcHash = SHA256(JSON.stringify(this)).toString();
                 this.hash = currentHash;
                 resolve(currentHash == recalcHash)
             } catch(e) { reject(e); }
@@ -59,22 +59,25 @@ class Block {
      *  3. Resolve with the data and make sure that you don't need to return the data for the `genesis block` 
      *     or Reject with an error.
      */
-    getBData() {
-        const encoded = this.body;
-        return new Promise((resolve, reject) => {
+    getBData() {       
+        const _getData = (resolve, reject) => {
+            // if this is the GENESIS block, resolve null
+            if (this.height === 0) {
+                resolve(null);
+                return;
+            }
             try {
                 // Getting the encoded data saved in the Block
                 // Decoding the data to retrieve the JSON representation of the object
-                const decoded = hex2ascii(encoded);
+                const decoded = hex2ascii(this.body);
                 // Parse the data to an object to be retrieve.
-                const data = JSON.parse(decoded)
-                // Resolve with the data if the object isn't the Genesis block
-                
-                // TODO: wtf is genesis block?
+                const data = JSON.parse(decoded);
+
                 resolve(data);
             }
             catch(e) { reject(e); }
-        });        
+        }
+        return new Promise(_getData);        
     }
 
 }
