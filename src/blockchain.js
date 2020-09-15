@@ -206,17 +206,22 @@ class Blockchain {
     let self = this;
     let errorLog = [];
     return new Promise(async (resolve, reject) => {
-      const height = await self.getChainHeight();
-      let block = self.getBlockByHeight(height);
-      const promises = [];
-      while(block) {
-        promises.push(block.validate())
-        if (block.height > 0)
-          block = await self.getBlockByHash(block.previousBlockHash);
-        else
-          block = null;
-      }
-      Promise.all(promises).then(() => resolve(true)).catch(e => reject(e));
+      try {
+        const chain = self.chain.slice().reverse()
+        for (let block of chain) {
+          if (block.height === 0)
+            continue;
+          let validated = await block.validate();
+          if (!validated) {
+            errorLog.push(block);
+            continue;
+          }
+          const previousBlock = await self.getBlockByHash(block.previousBlockHash);
+          if (!previousBlock || previousBlock.hash != block.previousBlockHash)
+            errorLog.push(block)
+        }
+        resolve(errorLog)
+      } catch(e) { reject(e); }
     });
   }
 
